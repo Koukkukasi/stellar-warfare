@@ -52,6 +52,9 @@ class StellarWarfare {
         // Connect to server
         this.game.connect('http://localhost:3000');
 
+        // CRASH PREVENTION: Set running flag to true
+        this.isRunning = true;
+
         // Start game loop
         this.gameLoop();
     }
