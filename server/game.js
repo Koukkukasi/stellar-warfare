@@ -46,8 +46,8 @@ class Game {
         x: Math.random() * this.worldSize.width,
         y: Math.random() * this.worldSize.height,
         radius: 20 + Math.random() * 40,
-        velocityX: (Math.random() - 0.5) * 2,
-        velocityY: (Math.random() - 0.5) * 2,
+        velocityX: (Math.random() - 0.5) * 100,
+        velocityY: (Math.random() - 0.5) * 100,
         rotation: Math.random() * Math.PI * 2,
         rotationSpeed: (Math.random() - 0.5) * 0.05
       });
