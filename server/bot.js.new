@@ -1,0 +1,4 @@
+// AI Bot with 6-State Machine and Difficulty Scaling
+// States: EXPLORE, HUNT, ENGAGE, EVADE, RETREAT, DEAD
+// Difficulty: EASY 45%, MEDIUM 65%, HARD 80%, EXPERT 90%
+

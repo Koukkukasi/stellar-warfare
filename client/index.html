@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stellar Warfare</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background: #000;
+            font-family: 'Courier New', monospace;
+        }
+
+        #gameCanvas {
+            display: block;
+            background: #000;
+        }
+
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #0f0;
+            font-size: 14px;
+            text-shadow: 0 0 5px #0f0;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #ui div {
+            margin-bottom: 5px;
+        }
+
+        #connectionStatus {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #0f0;
+            color: #0f0;
+            font-size: 12px;
+            text-shadow: 0 0 5px #0f0;
+        }
+
+        #connectionStatus.connected {
+            border-color: #0f0;
+            color: #0f0;
+        }
+
+        #connectionStatus.disconnected {
+            border-color: #f00;
+            color: #f00;
+            text-shadow: 0 0 5px #f00;
+        }
+
+        #controls {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            color: #0f0;
+            font-size: 12px;
+            text-shadow: 0 0 5px #0f0;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px;
+            border: 1px solid #0f0;
+        }
+
+        #controls div {
+            margin-bottom: 3px;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="ui">
+        <div id="fps">FPS: 0</div>
+        <div id="position">Position: (0, 0)</div>
+        <div id="velocity">Velocity: (0, 0)</div>
+        <div id="shipType">Ship: None</div>
+    </div>
+
+    <div id="connectionStatus" class="disconnected">Disconnected</div>
+
+    <div id="controls">
+        <div><strong>Controls:</strong></div>
+        <div>WASD - Movement</div>
+        <div>Mouse - Aim</div>
+        <div>Left Click - Fire</div>
+        <div>1/2/3 - Select Ship Type</div>
+        <div>Space - Brake</div>
+    </div>
+
+    <script src="http://localhost:3000/socket.io/socket.io.js"></script>
+    <script type="module" src="main.js"></script>
+</body>
+</html>

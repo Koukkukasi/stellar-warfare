@@ -1,0 +1,22 @@
+{
+  "name": "eslint-plugin-stellar-warfare-crash-prevention",
+  "version": "1.0.0",
+  "description": "ESLint plugin to prevent common crash patterns in real-time multiplayer games",
+  "main": "index.js",
+  "keywords": [
+    "eslint",
+    "eslintplugin",
+    "crash-prevention",
+    "game-development",
+    "memory-leak",
+    "resource-management"
+  ],
+  "author": "Stellar Warfare Team",
+  "license": "MIT",
+  "peerDependencies": {
+    "eslint": ">=7.0.0"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}
