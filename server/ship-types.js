@@ -13,12 +13,12 @@ const SHIP_TYPES = {
     // Stats (Asteroids-style: max ~200 px/s)
     maxHealth: 60,
     maxSpeed: 200,           // Reduced from 400
-    acceleration: 300,       // Reduced from 600
+    acceleration: 150,       // FIXED: Reduced from 300 for slower, controllable acceleration       // Reduced from 600
     rotationSpeed: 5.0,     
     friction: 0.98,          
 
     // Combat (slower bullets = visible)
-    fireRate: 200,           
+    fireRate: 500,           // Increased from 200 (was 5 shots/sec, now 2 shots/sec)           
     projectileSpeed: 300,    // Reduced from 600
     projectileDamage: 15,    
     projectileLifetime: 2.5, // Increased range to compensate
@@ -46,7 +46,7 @@ const SHIP_TYPES = {
     friction: 0.95,          
 
     // Combat
-    fireRate: 300,           
+    fireRate: 600,           // Increased from 300 (was 3.3 shots/sec, now 1.67 shots/sec)           
     projectileSpeed: 250,    // Reduced from 500
     projectileDamage: 25,    
     projectileLifetime: 3.0, 
@@ -74,7 +74,7 @@ const SHIP_TYPES = {
     friction: 0.92,          
 
     // Combat
-    fireRate: 500,           
+    fireRate: 800,           // Increased from 500 (was 2 shots/sec, now 1.25 shots/sec)           
     projectileSpeed: 200,    // Reduced from 400
     projectileDamage: 40,    
     projectileLifetime: 4.0, 
