@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const { createServer } = require('http');
 const { Server } = require('socket.io');
@@ -5,6 +6,7 @@ const Game = require('./game');
 
 const app = express();
 const httpServer = createServer(app);
+app.use(express.static(path.join(__dirname, '../client')));
 const io = new Server(httpServer, {
   cors: {
     origin: '*',
