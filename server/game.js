@@ -161,10 +161,11 @@ class Game {
   }
 
   updatePlayerPhysics(entity, deltaTime) {
-    // Calculate acceleration based on WASD inputs
+    // Calculate acceleration based on WASD inputs (ship-specific)
     let ax = 0;
     let ay = 0;
-    const accelForce = 400;
+    const accelForce = entity.acceleration || 400;
+    const friction = entity.friction || 0.98;
 
     if (entity.inputs) {
       if (entity.inputs.forward) {
@@ -193,16 +194,16 @@ class Game {
     entity.velocityX += ax * deltaTime;
     entity.velocityY += ay * deltaTime;
 
-    // Apply drag
-    const drag = 0.98;
-    entity.velocityX *= drag;
-    entity.velocityY *= drag;
+    // Apply friction (ship-specific)
+    entity.velocityX *= friction;
+    entity.velocityY *= friction;
 
-    // Limit max speed
+    // Limit max speed (ship-specific)
+    const maxSpeed = entity.maxSpeed || 300;
     const speed = Math.sqrt(entity.velocityX ** 2 + entity.velocityY ** 2);
-    if (speed > entity.maxSpeed) {
-      entity.velocityX = (entity.velocityX / speed) * entity.maxSpeed;
-      entity.velocityY = (entity.velocityY / speed) * entity.maxSpeed;
+    if (speed > maxSpeed) {
+      entity.velocityX = (entity.velocityX / speed) * maxSpeed;
+      entity.velocityY = (entity.velocityY / speed) * maxSpeed;
     }
 
     // Update position
@@ -367,7 +368,7 @@ class Game {
     player.velocityX = 0;
     player.velocityY = 0;
     player.rotation = Math.random() * Math.PI * 2;
-    player.health = 100;
+    player.health = player.maxHealth || 100; // Use ship-specific health
     player.isDead = false;
     player.respawnTimer = 0;
   }
@@ -470,10 +471,10 @@ class Game {
       player.rotation = input.angle;
     }
 
-    // Handle shooting
+    // Handle shooting (ship-specific fire rate)
     if (input.fire && player.weaponCooldown <= 0) {
       this.spawnProjectile(player);
-      player.weaponCooldown = 0.25;
+      player.weaponCooldown = (player.fireRate || 300) / 1000; // Convert ms to seconds
     }
   }
 
@@ -484,16 +485,19 @@ class Game {
       this.projectiles.shift(); // Remove oldest projectile
     }
 
-    const projectileSpeed = 600;
+    // Use ship-specific projectile stats
+    const projectileSpeed = owner.projectileSpeed || 600;
+    const spawnOffset = owner.size || 25;
+
     const projectile = {
       id: `proj_${Date.now()}_${Math.random()}`,
       ownerId: owner.id,
-      x: owner.x + Math.cos(owner.rotation) * 25,
-      y: owner.y + Math.sin(owner.rotation) * 25,
+      x: owner.x + Math.cos(owner.rotation) * spawnOffset,
+      y: owner.y + Math.sin(owner.rotation) * spawnOffset,
       velocityX: Math.cos(owner.rotation) * projectileSpeed + owner.velocityX,
       velocityY: Math.sin(owner.rotation) * projectileSpeed + owner.velocityY,
-      damage: 20,
-      lifetime: 2.0 // seconds
+      damage: owner.projectileDamage || 20,
+      lifetime: owner.projectileLifetime || 2.0
     };
 
     this.projectiles.push(projectile);
