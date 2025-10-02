@@ -13,7 +13,7 @@ const SHIP_TYPES = {
     // Stats (Asteroids-style: max ~200 px/s)
     maxHealth: 60,
     maxSpeed: 200,           // Reduced from 400
-    acceleration: 150,       // FIXED: Reduced from 300 for slower, controllable acceleration       // Reduced from 600
+    acceleration: 150,       // FIXED: Reduced from 300 for slower, controllable acceleration
     rotationSpeed: 5.0,     
     friction: 0.98,          
 
@@ -41,7 +41,7 @@ const SHIP_TYPES = {
     // Stats (Asteroids-style: max ~150 px/s)
     maxHealth: 100,
     maxSpeed: 150,           // Reduced from 300
-    acceleration: 200,       // Reduced from 400
+    acceleration: 120,       // FIXED: Reduced from 200 for slower, controllable acceleration
     rotationSpeed: 3.0,      
     friction: 0.95,          
 
@@ -69,7 +69,7 @@ const SHIP_TYPES = {
     // Stats (Asteroids-style: max ~100 px/s)
     maxHealth: 150,
     maxSpeed: 100,           // Reduced from 200
-    acceleration: 150,       // Reduced from 250
+    acceleration: 80,        // FIXED: Reduced from 150 for slower, controllable acceleration
     rotationSpeed: 2.0,      
     friction: 0.92,          
 

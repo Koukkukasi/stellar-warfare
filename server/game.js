@@ -164,7 +164,7 @@ class Game {
     // Calculate acceleration based on WASD inputs (ship-specific)
     let ax = 0;
     let ay = 0;
-    const accelForce = entity.acceleration || 400;
+    const accelForce = entity.acceleration || 200; // FIXED: Reduced from 400 for Asteroids-style control
     const friction = entity.friction || 0.98;
 
     if (entity.inputs) {
@@ -199,7 +199,7 @@ class Game {
     entity.velocityY *= friction;
 
     // Limit max speed (ship-specific)
-    const maxSpeed = entity.maxSpeed || 300;
+    const maxSpeed = entity.maxSpeed || 150; // FIXED: Reduced from 300 for Asteroids-style speeds
     const speed = Math.sqrt(entity.velocityX ** 2 + entity.velocityY ** 2);
     if (speed > maxSpeed) {
       entity.velocityX = (entity.velocityX / speed) * maxSpeed;
@@ -486,7 +486,7 @@ class Game {
     }
 
     // Use ship-specific projectile stats
-    const projectileSpeed = owner.projectileSpeed || 600;
+    const projectileSpeed = owner.projectileSpeed || 300; // FIXED: Reduced from 600 for visible projectiles
     const spawnOffset = owner.size || 25;
 
     const projectile = {
