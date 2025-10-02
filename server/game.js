@@ -1,5 +1,6 @@
 const Bot = require('./bot');
 const SpatialGrid = require('./spatial-grid');
+const { getShipConfig, getDefaultShip } = require('./ship-types');
 
 class Game {
   constructor(id, io, tickRate = 60) {
@@ -372,6 +373,10 @@ class Game {
   }
 
   addPlayer(socketId, socket, playerData) {
+    // Get ship configuration (default to Gunship if not specified)
+    const shipType = playerData.shipType || 'gunship';
+    const shipConfig = getShipConfig(shipType);
+
     const player = {
       id: socketId,
       socket: socket,
@@ -389,9 +394,22 @@ class Game {
         right: false,
         brake: false
       },
-      maxSpeed: 300,
-      health: 100,
-      maxHealth: 100,
+      // Ship-specific stats
+      shipType: shipConfig.id,
+      shipName: shipConfig.name,
+      maxSpeed: shipConfig.maxSpeed,
+      acceleration: shipConfig.acceleration,
+      rotationSpeed: shipConfig.rotationSpeed,
+      friction: shipConfig.friction,
+      fireRate: shipConfig.fireRate,
+      projectileSpeed: shipConfig.projectileSpeed,
+      projectileDamage: shipConfig.projectileDamage,
+      projectileLifetime: shipConfig.projectileLifetime,
+      size: shipConfig.size,
+      color: shipConfig.color,
+      shape: shipConfig.shape,
+      health: shipConfig.maxHealth,
+      maxHealth: shipConfig.maxHealth,
       isDead: false,
       score: 0,
       kills: 0,
@@ -406,7 +424,8 @@ class Game {
     socket.emit('gameJoined', {
       gameId: this.id,
       playerId: socketId,
-      worldSize: this.worldSize
+      worldSize: this.worldSize,
+      shipConfig: shipConfig
     });
   }
 
