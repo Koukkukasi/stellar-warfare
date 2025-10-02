@@ -127,6 +127,8 @@ export class Game {
                 this.state.player = {
                     ...serverPlayer,
                     angle: serverPlayer.rotation || 0,
+                    vx: serverPlayer.velocityX || 0,
+                    vy: serverPlayer.velocityY || 0,
                     id: this.playerId
                 };
             }
