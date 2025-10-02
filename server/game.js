@@ -207,8 +207,8 @@ class Game {
     }
 
     // Update position
-    entity.x += entity.velocityX * deltaTime * 60;
-    entity.y += entity.velocityY * deltaTime * 60;
+    entity.x += entity.velocityX * deltaTime;
+    entity.y += entity.velocityY * deltaTime;
 
     // Wrap around world boundaries
     if (entity.x < 0) entity.x += this.worldSize.width;
@@ -225,8 +225,8 @@ class Game {
   updateProjectiles(deltaTime) {
     this.projectiles = this.projectiles.filter(projectile => {
       // Update position
-      projectile.x += projectile.velocityX * deltaTime * 60;
-      projectile.y += projectile.velocityY * deltaTime * 60;
+      projectile.x += projectile.velocityX * deltaTime;
+      projectile.y += projectile.velocityY * deltaTime;
 
       // Decrease lifetime
       projectile.lifetime -= deltaTime;
@@ -240,8 +240,8 @@ class Game {
 
   updateAsteroids(deltaTime) {
     this.asteroids.forEach(asteroid => {
-      asteroid.x += asteroid.velocityX * deltaTime * 60;
-      asteroid.y += asteroid.velocityY * deltaTime * 60;
+      asteroid.x += asteroid.velocityX * deltaTime;
+      asteroid.y += asteroid.velocityY * deltaTime;
       asteroid.rotation += asteroid.rotationSpeed;
 
       // Wrap around boundaries

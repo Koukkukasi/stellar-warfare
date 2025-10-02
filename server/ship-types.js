@@ -1,10 +1,7 @@
 /**
- * Ship Type Configuration System
+ * Ship Type Configuration System - ASTEROIDS-STYLE SPEEDS
  *
- * Defines three distinct ship classes with different stats and playstyles:
- * - Interceptor: Fast, fragile, high maneuverability
- * - Gunship: Balanced, versatile, medium stats
- * - Cruiser: Slow, tanky, heavy firepower
+ * Balanced for Asteroids-style gameplay with slower, more controlled movement
  */
 
 const SHIP_TYPES = {
@@ -13,23 +10,23 @@ const SHIP_TYPES = {
     name: 'Interceptor',
     description: 'Fast and agile fighter - hit and run tactics',
 
-    // Stats
+    // Stats (Asteroids-style: max ~200 px/s)
     maxHealth: 60,
-    maxSpeed: 400,           // Fast movement
-    acceleration: 600,       // Quick acceleration
-    rotationSpeed: 5.0,      // High maneuverability
-    friction: 0.98,          // Low friction (slides more)
+    maxSpeed: 200,           // Reduced from 400
+    acceleration: 300,       // Reduced from 600
+    rotationSpeed: 5.0,     
+    friction: 0.98,          
 
-    // Combat
-    fireRate: 200,           // Fast firing (200ms between shots)
-    projectileSpeed: 600,    // Fast projectiles
-    projectileDamage: 15,    // Low damage per shot
-    projectileLifetime: 1.5, // Short range
+    // Combat (slower bullets = visible)
+    fireRate: 200,           
+    projectileSpeed: 300,    // Reduced from 600
+    projectileDamage: 15,    
+    projectileLifetime: 2.5, // Increased range to compensate
 
     // Visual
     size: 25,
-    color: '#00FFFF',        // Cyan
-    shape: 'triangle',       // Sleek design
+    color: '#00FFFF',        
+    shape: 'triangle',       
 
     // Gameplay
     difficulty: 'Medium',
@@ -41,23 +38,23 @@ const SHIP_TYPES = {
     name: 'Gunship',
     description: 'Balanced combat vessel - all-around performance',
 
-    // Stats
+    // Stats (Asteroids-style: max ~150 px/s)
     maxHealth: 100,
-    maxSpeed: 300,           // Medium movement
-    acceleration: 400,       // Medium acceleration
-    rotationSpeed: 3.0,      // Medium maneuverability
-    friction: 0.95,          // Medium friction
+    maxSpeed: 150,           // Reduced from 300
+    acceleration: 200,       // Reduced from 400
+    rotationSpeed: 3.0,      
+    friction: 0.95,          
 
     // Combat
-    fireRate: 300,           // Medium firing (300ms between shots)
-    projectileSpeed: 500,    // Medium projectiles
-    projectileDamage: 25,    // Medium damage
-    projectileLifetime: 2.0, // Medium range
+    fireRate: 300,           
+    projectileSpeed: 250,    // Reduced from 500
+    projectileDamage: 25,    
+    projectileLifetime: 3.0, 
 
     // Visual
     size: 30,
-    color: '#FFD700',        // Gold
-    shape: 'rectangle',      // Classic design
+    color: '#FFD700',        
+    shape: 'rectangle',      
 
     // Gameplay
     difficulty: 'Easy',
@@ -69,23 +66,23 @@ const SHIP_TYPES = {
     name: 'Cruiser',
     description: 'Heavy battleship - devastating firepower',
 
-    // Stats
+    // Stats (Asteroids-style: max ~100 px/s)
     maxHealth: 150,
-    maxSpeed: 200,           // Slow movement
-    acceleration: 250,       // Slow acceleration
-    rotationSpeed: 2.0,      // Low maneuverability
-    friction: 0.92,          // High friction (stops faster)
+    maxSpeed: 100,           // Reduced from 200
+    acceleration: 150,       // Reduced from 250
+    rotationSpeed: 2.0,      
+    friction: 0.92,          
 
     // Combat
-    fireRate: 500,           // Slow firing (500ms between shots)
-    projectileSpeed: 400,    // Slow projectiles
-    projectileDamage: 40,    // High damage per shot
-    projectileLifetime: 3.0, // Long range
+    fireRate: 500,           
+    projectileSpeed: 200,    // Reduced from 400
+    projectileDamage: 40,    
+    projectileLifetime: 4.0, 
 
     // Visual
     size: 40,
-    color: '#FF4444',        // Red
-    shape: 'hexagon',        // Heavy design
+    color: '#FF4444',        
+    shape: 'hexagon',        
 
     // Gameplay
     difficulty: 'Hard',
@@ -93,11 +90,6 @@ const SHIP_TYPES = {
   }
 };
 
-/**
- * Get ship configuration by type
- * @param {string} shipType - 'interceptor', 'gunship', or 'cruiser'
- * @returns {object} Ship configuration
- */
 function getShipConfig(shipType) {
   const type = shipType ? shipType.toUpperCase() : 'GUNSHIP';
 
@@ -109,28 +101,15 @@ function getShipConfig(shipType) {
   return SHIP_TYPES[type];
 }
 
-/**
- * Get all available ship types
- * @returns {array} Array of ship configurations
- */
 function getAllShipTypes() {
   return Object.values(SHIP_TYPES);
 }
 
-/**
- * Validate ship type
- * @param {string} shipType - Ship type to validate
- * @returns {boolean} True if valid
- */
 function isValidShipType(shipType) {
   if (!shipType) return false;
   return SHIP_TYPES.hasOwnProperty(shipType.toUpperCase());
 }
 
-/**
- * Get default ship type
- * @returns {object} Default ship configuration (Gunship)
- */
 function getDefaultShip() {
   return SHIP_TYPES.GUNSHIP;
 }
