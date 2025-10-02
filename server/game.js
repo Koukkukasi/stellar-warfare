@@ -517,7 +517,12 @@ class Game {
         isDead: p.isDead,
         score: p.score,
         kills: p.kills,
-        deaths: p.deaths
+        deaths: p.deaths,
+        velocityX: p.velocityX,
+        velocityY: p.velocityY,
+        shipType: p.shipType,
+        color: p.color,
+        size: p.size
       })),
       bots: Array.from(this.bots.values()).map(b => ({
         id: b.id,
