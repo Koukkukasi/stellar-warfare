@@ -17,9 +17,12 @@ class Game {
     this.projectiles = [];
     this.asteroids = [];
     this.powerups = [];
+    this.collectibles = [];
+    this.explosions = []; // Visual explosion effects
+    this.floatingTexts = []; // Damage numbers and pickup text
 
     // Game config - Full HD resolution (not 4K)
-    this.worldSize = { width: 1920, height: 1080 };
+    this.worldSize = { width: 3000, height: 2000 };
     this.maxPlayers = 10;
     this.gameStartTime = null;
     this.isRunning = false;
@@ -50,6 +53,59 @@ class Game {
         velocityY: (Math.random() - 0.5) * 100,
         rotation: Math.random() * Math.PI * 2,
         rotationSpeed: (Math.random() - 0.5) * 0.05
+      });
+    }
+
+    // Spawn initial collectibles
+    this.spawnCollectibles(10);
+  }
+
+  spawnCollectibles(count) {
+    // Collectible types - weapon upgrades
+    const types = [
+      { type: 'triple-shot', color: '#00ff00', radius: 15, effect: 'triple-shot', duration: 10 },
+      { type: 'rapid-fire', color: '#00ffff', radius: 15, effect: 'rapid-fire', duration: 8 },
+      { type: 'double-damage', color: '#ff0000', radius: 15, effect: 'double-damage', duration: 12 },
+      { type: 'piercing', color: '#ffff00', radius: 15, effect: 'piercing', duration: 10 },
+      { type: 'homing', color: '#ff00ff', radius: 15, effect: 'homing', duration: 8 }
+    ];
+
+    const minDistance = 200; // Minimum distance between collectibles
+
+    for (let i = 0; i < count; i++) {
+      const typeData = types[Math.floor(Math.random() * types.length)];
+
+      // Try to find a valid position (max 20 attempts)
+      let x, y, validPosition;
+      let attempts = 0;
+
+      do {
+        x = Math.random() * this.worldSize.width;
+        y = Math.random() * this.worldSize.height;
+        validPosition = true;
+
+        // Check distance to all existing collectibles
+        for (const collectible of this.collectibles) {
+          const dx = x - collectible.x;
+          const dy = y - collectible.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < minDistance) {
+            validPosition = false;
+            break;
+          }
+        }
+
+        attempts++;
+      } while (!validPosition && attempts < 20);
+
+      // Spawn collectible at found position
+      this.collectibles.push({
+        id: `collectible_${Date.now()}_${i}`,
+        x: x,
+        y: y,
+        ...typeData,
+        spawnTime: Date.now()
       });
     }
   }
@@ -94,7 +150,7 @@ class Game {
       // Update bots AI
       this.bots.forEach(bot => {
         try {
-          if (bot && bot.update) {
+          if (bot && !bot.isDead && bot.update) {
             bot.update(this.getGameState(), deltaTime);
           }
         } catch (err) {
@@ -116,13 +172,32 @@ class Game {
       });
 
       // Update bot physics
+      let botDebugCount = 0;
       this.bots.forEach(bot => {
         try {
           if (bot && !bot.isDead) {
+            // DEBUG: Log first bot's inputs every 60 frames (once per second at 60fps)
+            if (botDebugCount === 0 && this.lastTickTime % 1000 < 20) {
+              console.log(`[DEBUG] Bot ${bot.id.substring(0,8)} inputs: fwd=${bot.inputs?.forward}, left=${bot.inputs?.left}, right=${bot.inputs?.right}, vel=${Math.sqrt(bot.velocityX**2 + bot.velocityY**2).toFixed(1)}`);
+            }
             this.updatePlayerPhysics(bot, deltaTime);
+            botDebugCount++;
           }
         } catch (err) {
           console.error(`[Game ${this.id}] Bot physics error:`, err.message);
+          this.errorCount++;
+        }
+      });
+
+      // Handle bot weapons
+      this.bots.forEach(bot => {
+        try {
+          if (bot && !bot.isDead && bot.wantsToFireWeapon && bot.weaponCooldown <= 0) {
+            this.spawnProjectile(bot, false);
+            bot.weaponCooldown = (bot.fireRate || 300) / 1000; // Convert ms to seconds
+          }
+        } catch (err) {
+          console.error(`[Game ${this.id}] Bot weapon error:`, err.message);
           this.errorCount++;
         }
       });
@@ -132,6 +207,12 @@ class Game {
 
       // Update asteroids
       this.updateAsteroids(deltaTime);
+
+      // Update explosions
+      this.updateExplosions(deltaTime);
+
+      // Update floating texts
+      this.updateFloatingTexts(deltaTime);
 
       // Check collisions
       this.checkCollisions();
@@ -164,8 +245,8 @@ class Game {
     // Calculate acceleration based on WASD inputs (ship-specific)
     let ax = 0;
     let ay = 0;
-    const accelForce = entity.acceleration || 200; // FIXED: Reduced from 400 for Asteroids-style control
-    const friction = entity.friction || 0.98;
+    const accelForce = entity.acceleration || 500; // Increased for responsive controls
+    const drag = 0.98; // Drag coefficient (per-second basis)
 
     if (entity.inputs) {
       if (entity.inputs.forward) {
@@ -185,8 +266,10 @@ class Game {
         ay += Math.sin(entity.rotation + Math.PI / 2) * accelForce * 0.7;
       }
       if (entity.inputs.brake) {
-        entity.velocityX *= 0.9;
-        entity.velocityY *= 0.9;
+        // Strong braking
+        const brakePower = 0.85;
+        entity.velocityX *= Math.pow(brakePower, deltaTime * 60);
+        entity.velocityY *= Math.pow(brakePower, deltaTime * 60);
       }
     }
 
@@ -194,12 +277,13 @@ class Game {
     entity.velocityX += ax * deltaTime;
     entity.velocityY += ay * deltaTime;
 
-    // Apply friction (ship-specific)
-    entity.velocityX *= friction;
-    entity.velocityY *= friction;
+    // Apply drag (frame-rate independent)
+    const dragFactor = Math.pow(drag, deltaTime * 60);
+    entity.velocityX *= dragFactor;
+    entity.velocityY *= dragFactor;
 
     // Limit max speed (ship-specific)
-    const maxSpeed = entity.maxSpeed || 150; // FIXED: Reduced from 300 for Asteroids-style speeds
+    const maxSpeed = entity.maxSpeed || 300;
     const speed = Math.sqrt(entity.velocityX ** 2 + entity.velocityY ** 2);
     if (speed > maxSpeed) {
       entity.velocityX = (entity.velocityX / speed) * maxSpeed;
@@ -210,20 +294,80 @@ class Game {
     entity.x += entity.velocityX * deltaTime;
     entity.y += entity.velocityY * deltaTime;
 
-    // Wrap around world boundaries
-    if (entity.x < 0) entity.x += this.worldSize.width;
-    if (entity.x > this.worldSize.width) entity.x -= this.worldSize.width;
-    if (entity.y < 0) entity.y += this.worldSize.height;
-    if (entity.y > this.worldSize.height) entity.y -= this.worldSize.height;
+    // Boundary collision - bounce with damping to prevent getting stuck
+    const bounce = 0.5; // Bounce damping factor
+    const margin = 5; // Keep entities slightly away from exact edge
 
-    // Update weapon cooldown
+    if (entity.x < margin) {
+      entity.x = margin;
+      entity.velocityX = Math.abs(entity.velocityX) * bounce; // Bounce back
+    }
+    if (entity.x > this.worldSize.width - margin) {
+      entity.x = this.worldSize.width - margin;
+      entity.velocityX = -Math.abs(entity.velocityX) * bounce; // Bounce back
+    }
+    if (entity.y < margin) {
+      entity.y = margin;
+      entity.velocityY = Math.abs(entity.velocityY) * bounce; // Bounce back
+    }
+    if (entity.y > this.worldSize.height - margin) {
+      entity.y = this.worldSize.height - margin;
+      entity.velocityY = -Math.abs(entity.velocityY) * bounce; // Bounce back
+    }
+
+    // Update weapon cooldowns
     if (entity.weaponCooldown > 0) {
       entity.weaponCooldown -= deltaTime;
+    }
+    if (entity.secondaryWeaponCooldown > 0) {
+      entity.secondaryWeaponCooldown -= deltaTime;
     }
   }
 
   updateProjectiles(deltaTime) {
     this.projectiles = this.projectiles.filter(projectile => {
+      // Homing missile logic
+      if (projectile.isHoming) {
+        // Find nearest enemy
+        const allEntities = [...Array.from(this.players.values()), ...Array.from(this.bots.values())];
+        let nearestTarget = null;
+        let nearestDistance = Infinity;
+
+        allEntities.forEach(entity => {
+          if (entity.id !== projectile.ownerId && !entity.isDead) {
+            const dx = entity.x - projectile.x;
+            const dy = entity.y - projectile.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < nearestDistance && distance < 500) { // 500px homing range
+              nearestDistance = distance;
+              nearestTarget = entity;
+            }
+          }
+        });
+
+        // Apply homing acceleration
+        if (nearestTarget) {
+          const dx = nearestTarget.x - projectile.x;
+          const dy = nearestTarget.y - projectile.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance > 0) {
+            const targetAngle = Math.atan2(dy, dx);
+            projectile.velocityX += Math.cos(targetAngle) * projectile.homingStrength * deltaTime;
+            projectile.velocityY += Math.sin(targetAngle) * projectile.homingStrength * deltaTime;
+
+            // Limit missile speed
+            const speed = Math.sqrt(projectile.velocityX ** 2 + projectile.velocityY ** 2);
+            const maxSpeed = 600;
+            if (speed > maxSpeed) {
+              projectile.velocityX = (projectile.velocityX / speed) * maxSpeed;
+              projectile.velocityY = (projectile.velocityY / speed) * maxSpeed;
+            }
+          }
+        }
+      }
+
       // Update position
       projectile.x += projectile.velocityX * deltaTime;
       projectile.y += projectile.velocityY * deltaTime;
@@ -252,6 +396,37 @@ class Game {
     });
   }
 
+  updateExplosions(deltaTime) {
+    const now = Date.now();
+    this.explosions = this.explosions.filter(explosion => {
+      const age = (now - explosion.createdAt) / 1000; // Convert to seconds
+      return age < explosion.lifetime;
+    });
+  }
+
+  updateFloatingTexts(deltaTime) {
+    const now = Date.now();
+    this.floatingTexts = this.floatingTexts.filter(text => {
+      const age = (now - text.createdAt) / 1000; // Convert to seconds
+      return age < text.lifetime;
+    });
+  }
+
+  spawnFloatingText(x, y, text, color = '#ffffff', type = 'damage') {
+    const floatingText = {
+      id: `text_${Date.now()}_${Math.random()}`,
+      x: x,
+      y: y,
+      text: text,
+      color: color,
+      type: type,
+      createdAt: Date.now(),
+      lifetime: 1.5 // 1.5 seconds
+    };
+    this.floatingTexts.push(floatingText);
+    console.log('[FloatingText] Created:', text, 'at', x.toFixed(0), y.toFixed(0), 'total:', this.floatingTexts.length);
+  }
+
   checkCollisions() {
     // PERFORMANCE OPTIMIZATION: Use spatial grid to reduce O(n²) to O(n)
     //
@@ -274,6 +449,8 @@ class Game {
         // Only check entities near the projectile (3x3 grid area)
         const nearbyEntities = this.spatialGrid.getNearby(projectile);
 
+        let projectileHit = false;
+
         nearbyEntities.forEach(entity => {
           // Skip if not a player/bot or is the owner
           if (!entity.health || entity.id === projectile.ownerId || entity.isDead) {
@@ -285,30 +462,105 @@ class Game {
           const distance = Math.sqrt(dx * dx + dy * dy);
 
           if (distance < 20) { // Hit detection radius
-            // Damage player
-            entity.health -= projectile.damage;
-            projectile.lifetime = 0; // Mark projectile for removal
+            projectileHit = true;
 
-            if (entity.health <= 0) {
-              entity.isDead = true;
-              entity.health = 0;
+            // For secondary projectiles, deal AoE damage
+            if (projectile.isSecondary) {
+              // Mark for explosion
+              projectile.shouldExplode = true;
+              projectile.lifetime = 0;
+            } else {
+              // Normal projectile - single target damage
+              const damage = projectile.damage;
+              entity.health -= damage;
 
-              // Award kill to shooter
-              const shooter = this.players.get(projectile.ownerId) || this.bots.get(projectile.ownerId);
-              if (shooter) {
-                shooter.kills++;
-                shooter.score += 100;
+              // Piercing projectiles don't get destroyed on hit
+              if (!projectile.isPiercing) {
+                projectile.lifetime = 0; // Mark projectile for removal
               }
 
-              entity.deaths++;
+              // Spawn damage text
+              this.spawnFloatingText(entity.x, entity.y - 20, `-${Math.round(damage)}`, '#ff4444', 'damage');
+
+              if (entity.health <= 0) {
+                entity.isDead = true;
+                entity.health = 0;
+
+                // Award kill to shooter
+                const shooter = this.players.get(projectile.ownerId) || this.bots.get(projectile.ownerId);
+                if (shooter) {
+                  shooter.kills++;
+                  shooter.score += 100;
+                }
+
+                entity.deaths++;
+              }
             }
           }
         });
+
+        // Handle secondary projectile explosion
+        if (projectile.shouldExplode) {
+          const explosionRadius = 150;
+
+          // Create explosion visual effect
+          this.explosions.push({
+            id: `explosion_${Date.now()}_${Math.random()}`,
+            x: projectile.x,
+            y: projectile.y,
+            radius: explosionRadius,
+            createdAt: Date.now(),
+            lifetime: 0.5 // Half second visual
+          });
+
+          allEntities.forEach(entity => {
+            if (entity.id === projectile.ownerId || entity.isDead) return;
+
+            const dx = entity.x - projectile.x;
+            const dy = entity.y - projectile.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+
+            if (distance < explosionRadius) {
+              // Falloff damage based on distance
+              const damageFalloff = 1 - (distance / explosionRadius);
+              const explosionDamage = projectile.damage * damageFalloff;
+
+              entity.health -= explosionDamage;
+
+              // Spawn explosion damage text
+              this.spawnFloatingText(entity.x, entity.y - 20, `-${Math.round(explosionDamage)}`, '#ff8800', 'explosion');
+
+              if (entity.health <= 0) {
+                entity.isDead = true;
+                entity.health = 0;
+
+                // Award kill to shooter
+                const shooter = this.players.get(projectile.ownerId) || this.bots.get(projectile.ownerId);
+                if (shooter) {
+                  shooter.kills++;
+                  shooter.score += 100;
+                }
+
+                entity.deaths++;
+              }
+            }
+          });
+        }
       });
 
       // Player/Bot vs Asteroid collisions (using spatial grid)
       allEntities.forEach(entity => {
         if (entity.isDead) return;
+
+        // Initialize collision cooldown if not exists
+        if (!entity.asteroidCollisionCooldown) {
+          entity.asteroidCollisionCooldown = 0;
+        }
+
+        // Decrease cooldown
+        if (entity.asteroidCollisionCooldown > 0) {
+          entity.asteroidCollisionCooldown -= 1 / this.tickRate;
+        }
 
         // Only check asteroids near the entity
         const nearbyAsteroids = this.spatialGrid.getNearby(entity);
@@ -322,15 +574,43 @@ class Game {
           const distance = Math.sqrt(dx * dx + dy * dy);
 
           if (distance < asteroid.radius + 20) {
-            // Damage from asteroid collision
-            entity.health -= 5;
-            if (entity.health <= 0) {
-              entity.isDead = true;
-              entity.health = 0;
-              entity.deaths++;
+            // Push entity away from asteroid
+            const pushForce = 200;
+            const angle = Math.atan2(dy, dx);
+            entity.velocityX += Math.cos(angle) * pushForce * (1 / this.tickRate);
+            entity.velocityY += Math.sin(angle) * pushForce * (1 / this.tickRate);
+
+            // Damage from asteroid collision (with cooldown to prevent constant damage)
+            if (entity.asteroidCollisionCooldown <= 0) {
+              entity.health -= 5;
+              entity.asteroidCollisionCooldown = 0.5; // Half second cooldown
+
+              if (entity.health <= 0) {
+                entity.isDead = true;
+                entity.health = 0;
+                entity.deaths++;
+              }
             }
           }
         });
+      });
+
+      // Player/Bot vs Collectible collisions
+      this.collectibles = this.collectibles.filter(collectible => {
+        for (const entity of allEntities) {
+          if (entity.isDead) continue;
+
+          const dx = entity.x - collectible.x;
+          const dy = entity.y - collectible.y;
+          const distance = Math.sqrt(dx * dx + dy * dy);
+
+          if (distance < collectible.radius + 20) {
+            // Apply collectible effect
+            this.applyCollectibleEffect(entity, collectible);
+            return false; // Remove collectible
+          }
+        }
+        return true; // Keep collectible
       });
 
     } catch (err) {
@@ -360,6 +640,62 @@ class Game {
         }
       }
     });
+  }
+
+  applyCollectibleEffect(entity, collectible) {
+    let pickupText = '';
+    let textColor = collectible.color;
+
+    // Initialize weapon upgrades object
+    entity.weaponUpgrades = entity.weaponUpgrades || {};
+
+    switch (collectible.effect) {
+      case 'triple-shot':
+        entity.weaponUpgrades.tripleShot = {
+          active: true,
+          endTime: Date.now() + (collectible.duration * 1000)
+        };
+        pickupText = 'TRIPLE SHOT!';
+        break;
+      case 'rapid-fire':
+        entity.weaponUpgrades.rapidFire = {
+          active: true,
+          endTime: Date.now() + (collectible.duration * 1000)
+        };
+        pickupText = 'RAPID FIRE!';
+        break;
+      case 'double-damage':
+        entity.weaponUpgrades.doubleDamage = {
+          active: true,
+          endTime: Date.now() + (collectible.duration * 1000)
+        };
+        pickupText = 'DOUBLE DAMAGE!';
+        break;
+      case 'piercing':
+        entity.weaponUpgrades.piercing = {
+          active: true,
+          endTime: Date.now() + (collectible.duration * 1000)
+        };
+        pickupText = 'PIERCING SHOTS!';
+        break;
+      case 'homing':
+        entity.weaponUpgrades.homing = {
+          active: true,
+          endTime: Date.now() + (collectible.duration * 1000)
+        };
+        pickupText = 'HOMING MISSILES!';
+        break;
+    }
+
+    // Spawn pickup text
+    this.spawnFloatingText(collectible.x, collectible.y - 30, pickupText, textColor, 'pickup');
+
+    // Respawn collectible after delay
+    setTimeout(() => {
+      if (this.isRunning && this.collectibles.length < 15) {
+        this.spawnCollectibles(1);
+      }
+    }, 15000);
   }
 
   respawnPlayer(player) {
@@ -415,7 +751,8 @@ class Game {
       score: 0,
       kills: 0,
       deaths: 0,
-      weaponCooldown: 0
+      weaponCooldown: 0,
+      secondaryWeaponCooldown: 0
     };
 
     this.players.set(socketId, player);
@@ -466,19 +803,38 @@ class Game {
       brake: input.brake || false
     };
 
+    // DEBUG: Log strafe inputs when active
+    if (input.left || input.right) {
+      console.log(`[DEBUG] Player ${socketId.substring(0,4)} strafe: left=${input.left}, right=${input.right}`);
+    }
+
     // Update rotation from mouse angle
     if (input.angle !== undefined) {
       player.rotation = input.angle;
     }
 
-    // Handle shooting (ship-specific fire rate)
-    if (input.fire && player.weaponCooldown <= 0) {
-      this.spawnProjectile(player);
-      player.weaponCooldown = (player.fireRate || 300) / 1000; // Convert ms to seconds
+    // Handle primary shooting (ship-specific fire rate) - only if alive
+    if (!player.isDead && input.fire && player.weaponCooldown <= 0) {
+      this.spawnProjectile(player, false);
+
+      // Apply rapid fire upgrade
+      let fireRate = (player.fireRate || 300) / 1000; // Convert ms to seconds
+      const upgrades = player.weaponUpgrades || {};
+      if (upgrades.rapidFire?.active && Date.now() < upgrades.rapidFire.endTime) {
+        fireRate *= 0.5; // 50% faster firing
+      }
+
+      player.weaponCooldown = fireRate;
+    }
+
+    // Handle secondary shooting (more powerful, slower cooldown) - only if alive
+    if (!player.isDead && input.secondaryFire && player.secondaryWeaponCooldown <= 0) {
+      this.spawnProjectile(player, true);
+      player.secondaryWeaponCooldown = 3.0; // 3 second cooldown
     }
   }
 
-  spawnProjectile(owner) {
+  spawnProjectile(owner, isSecondary = false) {
     // CRASH PREVENTION: Limit total projectiles to prevent memory overflow
     if (this.projectiles.length >= this.MAX_PROJECTILES) {
       console.warn(`[Game ${this.id}] Projectile limit reached (${this.MAX_PROJECTILES}), removing oldest`);
@@ -486,8 +842,47 @@ class Game {
     }
 
     // Use ship-specific projectile stats
-    const projectileSpeed = owner.projectileSpeed || 300; // FIXED: Reduced from 600 for visible projectiles
+    let projectileSpeed = owner.projectileSpeed || 300;
+    let damage = owner.projectileDamage || 20;
+    let lifetime = owner.projectileLifetime || 2.0;
     const spawnOffset = owner.size || 25;
+
+    // Apply weapon upgrades
+    const upgrades = owner.weaponUpgrades || {};
+
+    // Double damage upgrade
+    if (upgrades.doubleDamage?.active && Date.now() < upgrades.doubleDamage.endTime) {
+      damage *= 2;
+    }
+
+    // Secondary weapon: slower, more powerful, homing
+    if (isSecondary) {
+      projectileSpeed *= 0.7; // 30% slower
+      damage *= 3; // 3x damage
+      lifetime *= 1.5; // Lasts longer
+    }
+    const isHoming = isSecondary; // Secondary weapon is always homing
+
+    // Triple shot upgrade - shoot 3 projectiles in a spread
+    if (!isSecondary && upgrades.tripleShot?.active && Date.now() < upgrades.tripleShot.endTime) {
+      const spreadAngles = [-0.2, 0, 0.2]; // 3 shots with spread
+      spreadAngles.forEach(angleOffset => {
+        const angle = owner.rotation + angleOffset;
+        this.projectiles.push({
+          id: `proj_${Date.now()}_${Math.random()}`,
+          ownerId: owner.id,
+          x: owner.x + Math.cos(angle) * spawnOffset,
+          y: owner.y + Math.sin(angle) * spawnOffset,
+          velocityX: Math.cos(angle) * projectileSpeed + owner.velocityX,
+          velocityY: Math.sin(angle) * projectileSpeed + owner.velocityY,
+          damage: damage,
+          lifetime: lifetime,
+          isSecondary: false,
+          isPiercing: upgrades.piercing?.active && Date.now() < upgrades.piercing.endTime
+        });
+      });
+      return; // Skip normal projectile spawn
+    }
 
     const projectile = {
       id: `proj_${Date.now()}_${Math.random()}`,
@@ -496,8 +891,12 @@ class Game {
       y: owner.y + Math.sin(owner.rotation) * spawnOffset,
       velocityX: Math.cos(owner.rotation) * projectileSpeed + owner.velocityX,
       velocityY: Math.sin(owner.rotation) * projectileSpeed + owner.velocityY,
-      damage: owner.projectileDamage || 20,
-      lifetime: owner.projectileLifetime || 2.0
+      damage: damage,
+      lifetime: lifetime,
+      isSecondary: isSecondary,
+      isPiercing: upgrades.piercing?.active && Date.now() < upgrades.piercing.endTime,
+      isHoming: isHoming,
+      homingStrength: 200 // Acceleration towards target
     };
 
     this.projectiles.push(projectile);
@@ -536,12 +935,27 @@ class Game {
         score: b.score,
         kills: b.kills,
         deaths: b.deaths,
+        velocityX: b.velocityX,
+        velocityY: b.velocityY,
+        shipType: b.shipType,
+        color: b.color,
+        size: b.size,
+        shape: b.shape,
         isBot: true
       })),
       projectiles: this.projectiles.map(p => ({
         id: p.id,
         x: p.x,
-        y: p.y
+        y: p.y,
+        isSecondary: p.isSecondary
+      })),
+      collectibles: this.collectibles.map(c => ({
+        id: c.id,
+        x: c.x,
+        y: c.y,
+        type: c.type,
+        color: c.color,
+        radius: c.radius
       })),
       asteroids: this.asteroids.map(a => ({
         id: a.id,
@@ -549,6 +963,23 @@ class Game {
         y: a.y,
         radius: a.radius,
         rotation: a.rotation
+      })),
+      explosions: this.explosions.map(e => ({
+        id: e.id,
+        x: e.x,
+        y: e.y,
+        radius: e.radius,
+        age: (Date.now() - e.createdAt) / 1000
+      })),
+      floatingTexts: this.floatingTexts.map(t => ({
+        id: t.id,
+        x: t.x,
+        y: t.y,
+        text: t.text,
+        color: t.color,
+        type: t.type,
+        createdAt: t.createdAt,
+        lifetime: t.lifetime
       }))
     };
   }

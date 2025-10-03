@@ -178,24 +178,29 @@ class Bot {
     this.target = null;
     this.targetType = null;
 
-    // Find nearest player (prioritize players over bots)
-    gameState.players.forEach(player => {
-      if (!player.isDead) {
-        const distance = this.getDistance(player.x, player.y);
-        if (distance < nearestDistance) {
-          nearestDistance = distance;
-          this.target = player;
-          this.targetType = 'player';
-        }
-      }
-    });
+    // Only 30% of bots target players, rest fight each other
+    const shouldTargetPlayers = this.aggressiveness > 0.7;
 
-    // If no players in range, target other bots
-    if (!this.target && this.aggressiveness > 0.5) {
+    if (shouldTargetPlayers) {
+      // Find nearest player
+      gameState.players.forEach(player => {
+        if (!player.isDead) {
+          const distance = this.getDistance(player.x, player.y);
+          if (distance < nearestDistance) {
+            nearestDistance = distance;
+            this.target = player;
+            this.targetType = 'player';
+          }
+        }
+      });
+    }
+
+    // If no player target or bot prefers fighting bots, target other bots
+    if (!this.target) {
       gameState.bots.forEach(bot => {
         if (bot.id !== this.id && !bot.isDead) {
           const distance = this.getDistance(bot.x, bot.y);
-          if (distance < nearestDistance * 0.8) { // Slightly prefer players
+          if (distance < nearestDistance) {
             nearestDistance = distance;
             this.target = bot;
             this.targetType = 'bot';
@@ -225,16 +230,16 @@ class Bot {
     const optimalRange = this.shootRange * 0.6;
 
     if (distance > this.shootRange) {
-      // Too far - move closer
-      this.targetAcceleration = this.acceleration;
+      // Too far - move closer (reduced from 1.0 to 0.5)
+      this.targetAcceleration = this.acceleration * 0.5;
       this.strafeTimer = 0;
     } else if (distance < optimalRange * 0.5) {
-      // Too close - back off
-      this.targetAcceleration = -this.acceleration * 0.5;
+      // Too close - back off (reduced from 0.5 to 0.3)
+      this.targetAcceleration = -this.acceleration * 0.3;
       this.strafeTimer = 0;
     } else {
-      // Good range - engage with strafing
-      this.targetAcceleration = this.acceleration * 0.3;
+      // Good range - engage with strafing (reduced from 0.3 to 0.2)
+      this.targetAcceleration = this.acceleration * 0.2;
 
       // Start strafing pattern
       if (this.strafeTimer <= 0) {
@@ -274,8 +279,8 @@ class Bot {
     // Set target rotation to wander angle
     this.targetRotation = this.wanderAngle;
 
-    // Move forward at moderate speed
-    this.targetAcceleration = this.acceleration * 0.5;
+    // Move forward at moderate speed (reduced from 0.5 to 0.3)
+    this.targetAcceleration = this.acceleration * 0.3;
     this.shouldShoot = false;
     this.strafeTimer = 0;
   }

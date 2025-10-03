@@ -1,7 +1,6 @@
 import { Game } from './game.js';
 import { Renderer } from './renderer.js';
 import { InputHandler } from './input.js';
-import { Minimap } from './minimap.js';
 
 class StellarWarfare {
     constructor() {
@@ -17,8 +16,6 @@ class StellarWarfare {
         this.game = new Game();
         this.renderer = new Renderer(this.ctx, this.canvas);
         this.inputHandler = new InputHandler(this.canvas, this.game);
-        this.minimap = new Minimap(3000, 2000);
-        this.minimap.updatePosition(this.canvas);
 
         // FPS tracking
         this.fps = 0;
@@ -48,7 +45,6 @@ class StellarWarfare {
 
         if (this.renderer) {
             this.renderer.updateCanvasSize(this.canvas);
-        if (this.minimap) this.minimap.updatePosition(this.canvas);
         }
     }
 
@@ -79,10 +75,6 @@ class StellarWarfare {
 
         // Render
         this.renderer.render(this.game.getState());
-        const state = this.game.getState();
-        this.renderer.camera.canvas = this.canvas;
-        const allEntities = (state.entities || []).concat(state.projectiles || []);
-        this.minimap.render(this.ctx, this.renderer.camera, allEntities, state.player);
 
         // Update UI
         this.updateUI(deltaTime);

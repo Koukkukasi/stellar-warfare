@@ -344,5 +344,7 @@ class Minimap {
   }
 }
 
-// Export for ES6 modules
-export { Minimap };
+// Export for use in other modules
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = Minimap;
+}

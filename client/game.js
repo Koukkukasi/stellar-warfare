@@ -18,7 +18,10 @@ export class Game {
             },
             entities: [],
             projectiles: [],
-            particles: []
+            particles: [],
+            collectibles: [],
+            explosions: [],
+            floatingTexts: []
         };
 
         // Input state
@@ -29,6 +32,7 @@ export class Game {
             right: false,
             brake: false,
             fire: false,
+            secondaryFire: false,
             mouseX: 0,
             mouseY: 0,
             shipType: 'Interceptor'
@@ -120,6 +124,18 @@ export class Game {
         // Update projectiles
         this.state.projectiles = serverState.projectiles || [];
 
+        // Update collectibles
+        this.state.collectibles = serverState.collectibles || [];
+
+        // Update explosions
+        this.state.explosions = serverState.explosions || [];
+
+        // Update floating texts
+        this.state.floatingTexts = serverState.floatingTexts || [];
+        if (this.state.floatingTexts.length > 0) {
+            console.log('[Game] Received floating texts from server:', this.state.floatingTexts.length, this.state.floatingTexts);
+        }
+
         // Update player state
         if (this.playerId && serverState.players) {
             const serverPlayer = serverState.players.find(p => p.id === this.playerId);
@@ -150,7 +166,7 @@ export class Game {
     predictPlayerMovement(deltaTime) {
         // Simple client-side prediction to reduce perceived latency
         const player = this.state.player;
-        if (!player) return;
+        if (!player || player.isDead) return; // Don't predict movement when dead
 
         const shipConfig = this.getShipConfig(player.shipType);
 
@@ -235,6 +251,7 @@ export class Game {
             right: this.input.right,
             brake: this.input.brake,
             fire: this.input.fire,
+            secondaryFire: this.input.secondaryFire,
             mouseX: this.input.mouseX,
             mouseY: this.input.mouseY,
             angle: this.state.player.angle

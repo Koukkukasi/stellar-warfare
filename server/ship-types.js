@@ -10,16 +10,16 @@ const SHIP_TYPES = {
     name: 'Interceptor',
     description: 'Fast and agile fighter - hit and run tactics',
 
-    // Stats (Asteroids-style: max ~200 px/s)
+    // Stats (Fast action gameplay)
     maxHealth: 60,
-    maxSpeed: 200,           // Reduced from 400
-    acceleration: 150,       // FIXED: Reduced from 300 for slower, controllable acceleration
-    rotationSpeed: 5.0,     
-    friction: 0.98,          
+    maxSpeed: 300,           // Reduced from 500 for bots
+    acceleration: 400,       // Reduced from 800
+    rotationSpeed: 6.0,      // Fast rotation
+    friction: 0.99,          // Low friction = drift          
 
     // Combat (slower bullets = visible)
     fireRate: 500,           // Increased from 200 (was 5 shots/sec, now 2 shots/sec)           
-    projectileSpeed: 300,    // Reduced from 600
+    projectileSpeed: 400,    // Faster bullets
     projectileDamage: 15,    
     projectileLifetime: 2.5, // Increased range to compensate
 
@@ -38,16 +38,16 @@ const SHIP_TYPES = {
     name: 'Gunship',
     description: 'Balanced combat vessel - all-around performance',
 
-    // Stats (Asteroids-style: max ~150 px/s)
+    // Stats (Fast action gameplay - balanced)
     maxHealth: 100,
-    maxSpeed: 150,           // Reduced from 300
-    acceleration: 120,       // FIXED: Reduced from 200 for slower, controllable acceleration
-    rotationSpeed: 3.0,      
-    friction: 0.95,          
+    maxSpeed: 250,           // Reduced from 420
+    acceleration: 350,       // Reduced from 650
+    rotationSpeed: 4.5,      // Good rotation
+    friction: 0.985,         // Low friction for drift          
 
     // Combat
     fireRate: 600,           // Increased from 300 (was 3.3 shots/sec, now 1.67 shots/sec)           
-    projectileSpeed: 250,    // Reduced from 500
+    projectileSpeed: 350,    // Fast bullets
     projectileDamage: 25,    
     projectileLifetime: 3.0, 
 
@@ -66,16 +66,16 @@ const SHIP_TYPES = {
     name: 'Cruiser',
     description: 'Heavy battleship - devastating firepower',
 
-    // Stats (Asteroids-style: max ~100 px/s)
+    // Stats (Fast action gameplay - heavy but powerful)
     maxHealth: 150,
-    maxSpeed: 100,           // Reduced from 200
-    acceleration: 80,        // FIXED: Reduced from 150 for slower, controllable acceleration
-    rotationSpeed: 2.0,      
-    friction: 0.92,          
+    maxSpeed: 200,           // Reduced from 360
+    acceleration: 250,       // Reduced from 500
+    rotationSpeed: 3.0,      // Slower rotation
+    friction: 0.97,          // More friction for heavy          
 
     // Combat
     fireRate: 800,           // Increased from 500 (was 2 shots/sec, now 1.25 shots/sec)           
-    projectileSpeed: 200,    // Reduced from 400
+    projectileSpeed: 300,    // Decent bullets
     projectileDamage: 40,    
     projectileLifetime: 4.0, 
 

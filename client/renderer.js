@@ -66,11 +66,23 @@ export class Renderer {
             this.renderGrid();
         }
 
+        // Render world border
+        this.renderWorldBorder();
+
         // Render entities
         this.renderEntities(state.entities);
 
         // Render projectiles
         this.renderProjectiles(state.projectiles);
+
+        // Render collectibles
+        this.renderCollectibles(state.collectibles);
+
+        // Render explosions
+        this.renderExplosions(state.explosions);
+
+        // Render floating texts (in world space)
+        this.renderFloatingTexts(state.floatingTexts);
 
         // Render player
         if (state.player) {
@@ -113,6 +125,20 @@ export class Renderer {
             this.ctx.lineTo(endX, y);
             this.ctx.stroke();
         }
+    }
+
+    renderWorldBorder() {
+        // World dimensions: 4000x3000 (from server game.js)
+        const worldWidth = 4000;
+        const worldHeight = 3000;
+
+        this.ctx.strokeStyle = '#00ff00';
+        this.ctx.lineWidth = 5;
+        this.ctx.setLineDash([20, 10]);
+
+        this.ctx.strokeRect(0, 0, worldWidth, worldHeight);
+
+        this.ctx.setLineDash([]);
     }
 
     renderEntities(entities) {
@@ -322,24 +348,195 @@ export class Renderer {
         projectiles.forEach(proj => {
             this.ctx.save();
 
-            // Projectile trail effect
+            // Different rendering for secondary projectiles
+            if (proj.isSecondary) {
+                // Larger, blue secondary projectile
+                const gradient = this.ctx.createRadialGradient(
+                    proj.x, proj.y, 0,
+                    proj.x, proj.y, 8
+                );
+                gradient.addColorStop(0, 'rgba(0, 100, 255, 1)');
+                gradient.addColorStop(1, 'rgba(0, 100, 255, 0)');
+
+                this.ctx.fillStyle = gradient;
+                this.ctx.beginPath();
+                this.ctx.arc(proj.x, proj.y, 8, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Core
+                this.ctx.fillStyle = '#00ffff';
+                this.ctx.beginPath();
+                this.ctx.arc(proj.x, proj.y, 4, 0, Math.PI * 2);
+                this.ctx.fill();
+            } else {
+                // Standard projectile trail effect
+                const gradient = this.ctx.createRadialGradient(
+                    proj.x, proj.y, 0,
+                    proj.x, proj.y, 5
+                );
+                gradient.addColorStop(0, 'rgba(255, 100, 0, 1)');
+                gradient.addColorStop(1, 'rgba(255, 100, 0, 0)');
+
+                this.ctx.fillStyle = gradient;
+                this.ctx.beginPath();
+                this.ctx.arc(proj.x, proj.y, 5, 0, Math.PI * 2);
+                this.ctx.fill();
+
+                // Core
+                this.ctx.fillStyle = '#ffff00';
+                this.ctx.beginPath();
+                this.ctx.arc(proj.x, proj.y, 2, 0, Math.PI * 2);
+                this.ctx.fill();
+            }
+
+            this.ctx.restore();
+        });
+    }
+
+    renderCollectibles(collectibles) {
+        if (!collectibles) return;
+
+        collectibles.forEach(collectible => {
+            this.ctx.save();
+
+            // Pulsing glow effect
+            const time = Date.now() / 1000;
+            const pulse = 0.8 + Math.sin(time * 3) * 0.2;
+
+            // Outer glow
             const gradient = this.ctx.createRadialGradient(
-                proj.x, proj.y, 0,
-                proj.x, proj.y, 5
+                collectible.x, collectible.y, 0,
+                collectible.x, collectible.y, collectible.radius * 2
             );
-            gradient.addColorStop(0, 'rgba(255, 100, 0, 1)');
-            gradient.addColorStop(1, 'rgba(255, 100, 0, 0)');
+            gradient.addColorStop(0, collectible.color);
+            gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+            this.ctx.fillStyle = gradient;
+            this.ctx.globalAlpha = pulse * 0.5;
+            this.ctx.beginPath();
+            this.ctx.arc(collectible.x, collectible.y, collectible.radius * 2, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Inner circle
+            this.ctx.globalAlpha = pulse;
+            this.ctx.fillStyle = collectible.color;
+            this.ctx.beginPath();
+            this.ctx.arc(collectible.x, collectible.y, collectible.radius, 0, Math.PI * 2);
+            this.ctx.fill();
+
+            // Icon/symbol based on type
+            this.ctx.globalAlpha = 1;
+            this.ctx.fillStyle = '#000';
+            this.ctx.font = 'bold 12px monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+
+            const symbols = {
+                'triple-shot': '⚡',
+                'rapid-fire': '≡',
+                'double-damage': '★',
+                'piercing': '»',
+                'homing': '⊕'
+            };
+
+            this.ctx.fillText(symbols[collectible.type] || '?', collectible.x, collectible.y);
+
+            this.ctx.restore();
+        });
+    }
+
+    renderExplosions(explosions) {
+        if (!explosions) return;
+
+        explosions.forEach(explosion => {
+            this.ctx.save();
+
+            // Calculate explosion progress (0 to 1)
+            const progress = explosion.age / 0.5; // 0.5 second lifetime
+
+            // Expanding ring effect
+            const currentRadius = explosion.radius * (0.3 + progress * 0.7);
+            const alpha = 1 - progress; // Fade out over time
+
+            // Outer shockwave
+            const gradient = this.ctx.createRadialGradient(
+                explosion.x, explosion.y, currentRadius * 0.5,
+                explosion.x, explosion.y, currentRadius
+            );
+            gradient.addColorStop(0, `rgba(255, 150, 0, ${alpha * 0.8})`);
+            gradient.addColorStop(0.5, `rgba(255, 100, 0, ${alpha})`);
+            gradient.addColorStop(1, `rgba(255, 50, 0, 0)`);
 
             this.ctx.fillStyle = gradient;
             this.ctx.beginPath();
-            this.ctx.arc(proj.x, proj.y, 5, 0, Math.PI * 2);
+            this.ctx.arc(explosion.x, explosion.y, currentRadius, 0, Math.PI * 2);
             this.ctx.fill();
 
-            // Core
-            this.ctx.fillStyle = '#ffff00';
+            // Inner flash
+            const flashRadius = explosion.radius * 0.3 * (1 - progress);
+            this.ctx.fillStyle = `rgba(255, 255, 200, ${alpha * 0.9})`;
             this.ctx.beginPath();
-            this.ctx.arc(proj.x, proj.y, 2, 0, Math.PI * 2);
+            this.ctx.arc(explosion.x, explosion.y, flashRadius, 0, Math.PI * 2);
             this.ctx.fill();
+
+            // Ring border
+            this.ctx.strokeStyle = `rgba(255, 200, 0, ${alpha})`;
+            this.ctx.lineWidth = 3;
+            this.ctx.beginPath();
+            this.ctx.arc(explosion.x, explosion.y, currentRadius, 0, Math.PI * 2);
+            this.ctx.stroke();
+
+            this.ctx.restore();
+        });
+    }
+
+    renderFloatingTexts(floatingTexts) {
+        if (!floatingTexts) return;
+
+        if (floatingTexts.length > 0) {
+            console.log('[Renderer] Rendering floating texts:', floatingTexts.length, floatingTexts[0]);
+        }
+
+        floatingTexts.forEach(text => {
+            // Calculate age and progress
+            const age = (Date.now() - text.createdAt) / 1000; // Age in seconds
+            const progress = age / text.lifetime; // 0 to 1
+
+            // Skip if too old (should be filtered server-side but just in case)
+            if (progress >= 1) return;
+
+            // Text rises up and fades out
+            const riseDistance = 50; // Pixels to rise
+            const currentY = text.y - (riseDistance * progress);
+            const alpha = Math.max(0, 1 - progress); // Fade out
+
+            // Already in camera space, just render directly
+            this.ctx.save();
+
+            // Render text with outline for better visibility
+            this.ctx.font = 'bold 24px monospace'; // Larger font
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+
+            // Black outline
+            this.ctx.strokeStyle = `rgba(0, 0, 0, ${alpha})`;
+            this.ctx.lineWidth = 4;
+            this.ctx.strokeText(text.text, text.x, currentY);
+
+            // Colored fill - convert hex to rgba
+            let r, g, b;
+            if (text.color && text.color.startsWith('#')) {
+                // Convert hex to RGB
+                const hex = text.color.substring(1);
+                r = parseInt(hex.substring(0, 2), 16);
+                g = parseInt(hex.substring(2, 4), 16);
+                b = parseInt(hex.substring(4, 6), 16);
+            } else {
+                // Default to white
+                r = g = b = 255;
+            }
+            this.ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            this.ctx.fillText(text.text, text.x, currentY);
 
             this.ctx.restore();
         });

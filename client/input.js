@@ -136,12 +136,16 @@ export class InputHandler {
     handleMouseDown(e) {
         if (e.button === 0) { // Left click
             this.game.setInput('fire', true);
+        } else if (e.button === 2) { // Right click
+            this.game.setInput('secondaryFire', true);
         }
     }
 
     handleMouseUp(e) {
         if (e.button === 0) { // Left click
             this.game.setInput('fire', false);
+        } else if (e.button === 2) { // Right click
+            this.game.setInput('secondaryFire', false);
         }
     }
 
