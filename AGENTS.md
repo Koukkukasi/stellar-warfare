@@ -81,6 +81,33 @@ This repository includes specialized Claude Code agents configured for specific 
 - **Tutorial Levels**: Progressive teaching, skill introduction, onboarding
 - **Balancing Tools**: Difficulty calculators, metrics tracking, playtesting frameworks
 
+### game-graphics-designer
+**Purpose**: Visual asset creation for games (sprites, animations, UI, effects)
+**Tools**: Read, Write, Edit, Glob, Grep, Bash
+**Specializations**:
+- **Art Styles**: Pixel art, vector graphics, 2D hand-drawn, 3D rendered 2D
+- **Sprite Design**: Characters, vehicles, environments, animations
+- **Particle Effects**: Explosions, trails, power-ups, environmental effects
+- **UI/UX Graphics**: Buttons, icons, HUD elements, menus
+- **Canvas Graphics**: HTML5 Canvas drawing, procedural generation
+- **SVG Graphics**: Scalable vector assets, filters, gradients
+- **Animation**: Sprite sheets, frame-by-frame, timing and easing
+- **Optimization**: File size reduction, sprite atlases, performance budgets
+- **Color Theory**: Palettes, accessibility, visual cohesion
+
+### fact-checker
+**Purpose**: Verification and validation of technical claims and information
+**Tools**: Read, WebFetch, WebSearch, Grep, Glob, Bash
+**Specializations**:
+- **Technical Verification**: API documentation, library capabilities, version compatibility
+- **Code Validation**: Syntax checking, logical correctness, best practices
+- **Documentation Cross-Reference**: Official docs, authoritative sources
+- **Performance Claims**: Benchmark verification, measurement validation
+- **Security Verification**: Best practices validation, vulnerability checking
+- **Source Reliability**: Rating confidence levels, identifying red flags
+- **Fact-Check Reports**: Structured verification with sources and evidence
+- **Multi-Source Validation**: Cross-referencing independent sources
+
 ## Using Agents
 
 Agents are automatically available and can be invoked by Claude Code when appropriate for the task. To explicitly request an agent:
@@ -88,6 +115,8 @@ Agents are automatically available and can be invoked by Claude Code when approp
 - "Run the code-reviewer agent on the Nordic Football Betting codebase"
 - "Use dependency-checker to scan all projects for vulnerabilities"
 - "Use game-level-designer to create a new multiplayer map"
+- "Use game-graphics-designer to create ship sprites and UI elements"
+- "Use fact-checker to verify that Socket.IO supports automatic reconnection"
 
 ## Agent Configuration
 
