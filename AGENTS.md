@@ -134,7 +134,7 @@ Each agent is defined in a JSON file with the following structure:
 2025-10-03
 
 ## Projects Using Agents
-- **Stellar Warfare**: game-ux-optimizer, ui-design-system-architect, server-specialist, code-reviewer, game-level-designer
-- **Nordic Football Betting**: dependency-checker, code-reviewer
-- **All Game Projects**: game-level-designer, game-ux-optimizer
-- **All Projects**: process-manager, dependency-checker
+- **Stellar Warfare**: game-ux-optimizer, ui-design-system-architect, server-specialist, code-reviewer, game-level-designer, game-graphics-designer, fact-checker
+- **Nordic Football Betting**: dependency-checker, code-reviewer, fact-checker
+- **All Game Projects**: game-level-designer, game-ux-optimizer, game-graphics-designer
+- **All Projects**: process-manager, dependency-checker, fact-checker
